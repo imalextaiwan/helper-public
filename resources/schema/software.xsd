@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Helper 3.0 軟體清單 software.xml 的格式（設計第 4.2 節）
+
+  和 software.xml 放在同一個資料夾，software.xml 以 xsi:noNamespaceSchemaLocation 指向它，
+  VS Code 等編輯器就能即時標出格式錯誤。只給編輯器用：Helper 執行時不讀這個檔案（Q6），
+  「執行檔是否存在」這類 XSD 做不到的檢查由程式負責（設計第 6.2 節）。
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:element name="software">
+    <xs:annotation>
+      <xs:documentation xml:lang="zh-TW">軟體清單。排列順序就是介面顯示與執行的順序。</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="item" type="itemType" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="timeout" type="xs:positiveInteger">
+        <xs:annotation>
+          <xs:documentation xml:lang="zh-TW">每個項目的逾時，單位是秒；省略時為 300 秒。</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+    <xs:unique name="uniqueItemId">
+      <xs:selector xpath="item"/>
+      <xs:field xpath="@id"/>
+    </xs:unique>
+  </xs:element>
+
+  <xs:complexType name="itemType">
+    <xs:annotation>
+      <xs:documentation xml:lang="zh-TW">一個軟體項目。子元素的順序不限。</xs:documentation>
+    </xs:annotation>
+    <xs:all>
+      <xs:element name="name" type="nonBlankType">
+        <xs:annotation>
+          <xs:documentation xml:lang="zh-TW">介面上顯示的名稱。</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="folder" type="relativeFolderType">
+        <xs:annotation>
+          <xs:documentation xml:lang="zh-TW">子資料夾，相對於資源資料夾；不可以是絕對路徑，也不可含 ..。資料夾裡有 icon.ico／.png／.jpg／.jpeg／.gif 時自動作為圖示。</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="executable" type="fileNameType">
+        <xs:annotation>
+          <xs:documentation xml:lang="zh-TW">子資料夾裡的執行檔名稱，只寫檔名。</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="args" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation xml:lang="zh-TW">參數，原樣傳給執行檔。&amp; 要寫成 &amp;amp;，&lt; 要寫成 &amp;lt;。</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+    <xs:attribute name="id" type="idType" use="required">
+      <xs:annotation>
+        <xs:documentation xml:lang="zh-TW">只能用小寫英文、數字、底線，在這個檔案內不可重複。</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="successCodes" type="exitCodesType">
+      <xs:annotation>
+        <xs:documentation xml:lang="zh-TW">視為成功的結束碼，以逗號分隔，例如 0,3010；省略時只有 0。</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="copyFirst" type="trueFalseType">
+      <xs:annotation>
+        <xs:documentation xml:lang="zh-TW">執行前是否先複製到「下載」的暫存資料夾；省略時為 true。本身就會把檔案複製到桌面的工具設為 false。</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:simpleType name="idType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[a-z0-9_]+"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="nonBlankType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value=".*\S.*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- 一層資料夾或檔名：不含 \ / : * ? " < > |，也不可以是 . 或 .. 開頭 -->
+  <xs:simpleType name="fileNameType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value='[^\\/:*?"&lt;&gt;|.][^\\/:*?"&lt;&gt;|]*|\.[^\\/:*?"&lt;&gt;|.][^\\/:*?"&lt;&gt;|]*'/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- 以 \ 或 / 連接的多層資料夾，每一層的規則同 fileNameType -->
+  <xs:simpleType name="relativeFolderType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value='([^\\/:*?"&lt;&gt;|.][^\\/:*?"&lt;&gt;|]*|\.[^\\/:*?"&lt;&gt;|.][^\\/:*?"&lt;&gt;|]*)([\\/]([^\\/:*?"&lt;&gt;|.][^\\/:*?"&lt;&gt;|]*|\.[^\\/:*?"&lt;&gt;|.][^\\/:*?"&lt;&gt;|]*))*'/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="exitCodesType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[0-9]+(,[0-9]+)*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="trueFalseType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="true"/>
+      <xs:enumeration value="false"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

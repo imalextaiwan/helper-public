@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 範例資源資料夾的系統設定任務（設計第 4.3 節）。腳本在 tasks\<id>.cmd，只執行無害的 echo -->
+<systemTasks timeout="300"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:noNamespaceSchemaLocation="system_tasks.xsd">
+  <category id="power" name="電源與穩定性優化">
+    <task id="power_001">
+      <name>範例：失敗即停</name>
+      <description>依序執行兩個步驟，任何一步失敗就停止</description>
+    </task>
+  </category>
+  <category id="security" name="安全性與存取優化">
+    <task id="security_001">
+      <name>範例：全部跑完</name>
+      <description>每個步驟都執行，有任何一步失敗就回報失敗</description>
+    </task>
+  </category>
+</systemTasks>

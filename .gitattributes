@@ -1,0 +1,5 @@
+* text=auto
+# cmd.exe 遇到只有 LF 的換行時，goto / call :label 可能出錯，batch 一律用 CRLF
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ico binary

@@ -1,0 +1,7 @@
+# 開發、測試、打包用
+-r requirements.txt
+pytest==9.1.1
+pyflakes==4.0.0
+pyinstaller==6.22.3
+# 測試時用 XSD 檢查範例 XML；程式執行時不讀 XSD（Q6），不打包進執行檔
+lxml==6.1.3

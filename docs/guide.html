@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Helper 3.0 使用與維護</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* 版面：單欄的操作手冊；按鈕名稱用工具本身的按鈕顏色標示，指令與 XML 可以一鍵複製 */
+  :root {
+    --bg: #f4f7fb;
+    --surface: #ffffff;
+    --ink: #17202b;
+    --muted: #586678;
+    --line: #d7e0ea;
+    --accent: #1765c4;
+    --accent-soft: #e5effb;
+    --code-bg: #eef2f7;
+    --warn: #9a4a07;
+    --warn-bg: #fcf0e2;
+    --warn-line: #efcfa8;
+    /* 工具介面上的按鈕顏色（gui.py 的 BUTTONS），兩種主題都用白字 */
+    --btn-green: #3f9a43;
+    --btn-red: #d9382b;
+    --btn-blue: #1f88e5;
+    --btn-orange: #e8521f;
+    --btn-grey: #808a91;
+    --btn-slate: #546e7a;
+    --font-display: "Noto Serif TC", "Noto Serif CJK TC", "PMingLiU", serif;
+    --font-body: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", "Cascadia Mono", Consolas, "Noto Sans TC", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1319; --surface: #151c25; --ink: #e5ecf4; --muted: #9babbd; --line: #283442;
+      --accent: #6aaeff; --accent-soft: #172a41; --code-bg: #0a0f15;
+      --warn: #f2b072; --warn-bg: #2a1d10; --warn-line: #5a3d1d;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1319; --surface: #151c25; --ink: #e5ecf4; --muted: #9babbd; --line: #283442;
+    --accent: #6aaeff; --accent-soft: #172a41; --code-bg: #0a0f15;
+    --warn: #f2b072; --warn-bg: #2a1d10; --warn-line: #5a3d1d;
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 400 16px/1.75 var(--font-body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 32px 64px;
+  }
+  .page { max-width: 860px; margin: 0 auto; display: grid; gap: 40px; }
+  header { display: grid; gap: 12px; padding-bottom: 24px; border-bottom: 1px solid var(--line); }
+  .kicker { font: 500 13px/1.4 var(--font-mono); letter-spacing: .06em; color: var(--muted); }
+  h1 { font: 700 clamp(30px, 6vw, 42px)/1.2 var(--font-display); margin: 0; text-wrap: balance; }
+  .lede { margin: 0; color: var(--muted); max-width: 62ch; }
+  nav.toc { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  nav.toc a {
+    text-decoration: none; color: var(--accent); background: var(--accent-soft);
+    border-radius: 999px; padding: 4px 14px; font-weight: 500; font-size: 14px;
+  }
+  nav.toc a:focus-visible, a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .notice {
+    background: var(--warn-bg); border: 1px solid var(--warn-line); color: var(--ink);
+    border-radius: 10px; padding: 14px 18px; display: grid; gap: 4px;
+  }
+  .notice strong { color: var(--warn); }
+  .notice p { margin: 0; }
+
+  section.part { display: grid; gap: 28px; scroll-margin-top: 16px; }
+  .part-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  h2 { font: 700 28px/1.3 var(--font-display); margin: 0; }
+  .who { font-size: 14px; color: var(--muted); }
+  article { display: grid; gap: 12px; min-width: 0; }
+  h3 { font: 700 19px/1.4 var(--font-body); margin: 0; text-wrap: balance; }
+  p { margin: 0; max-width: 68ch; }
+  ul, ol { margin: 0; padding-left: 1.4em; display: grid; gap: 6px; max-width: 68ch; }
+  .muted { color: var(--muted); }
+  a { color: var(--accent); }
+
+  code {
+    font: 400 .9em/1 var(--font-mono); background: var(--code-bg); border-radius: 4px; padding: .12em .35em;
+    overflow-wrap: anywhere;
+  }
+  .block { position: relative; min-width: 0; }
+  pre {
+    margin: 0; background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px;
+    padding: 14px 16px; overflow-x: auto; font: 400 13.5px/1.6 var(--font-mono); color: var(--ink);
+  }
+  pre code { background: none; padding: 0; font: inherit; }
+  .copy {
+    position: absolute; top: 8px; right: 8px; font: 500 12px/1 var(--font-body); color: var(--muted);
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; cursor: pointer;
+  }
+  .copy:hover { color: var(--accent); border-color: var(--accent); }
+  .tree .dim { color: var(--muted); }
+
+  .btn {
+    display: inline-block; font: 700 13px/1 var(--font-body); color: #fff; border-radius: 4px;
+    padding: 4px 8px; vertical-align: 1px; white-space: nowrap;
+  }
+  .btn.green { background: var(--btn-green); }
+  .btn.red { background: var(--btn-red); }
+  .btn.blue { background: var(--btn-blue); }
+  .btn.orange { background: var(--btn-orange); }
+  .btn.grey { background: var(--btn-grey); }
+  .btn.slate { background: var(--btn-slate); }
+
+  .steps { counter-reset: step; list-style: none; padding: 0; gap: 10px; }
+  .steps > li { counter-increment: step; display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; }
+  .steps > li::before {
+    content: counter(step); font: 700 13px/28px var(--font-mono); text-align: center;
+    width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent);
+  }
+  .steps > li > div { min-width: 0; display: grid; gap: 8px; }
+
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  th { font-weight: 700; font-size: 13px; color: var(--muted); letter-spacing: .04em; background: var(--code-bg); }
+  td:first-child { white-space: nowrap; }
+  .state { font-weight: 500; }
+
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 6px; min-width: 0; }
+  .card h4 { margin: 0; font-size: 15px; }
+  .card p { font-size: 15px; }
+
+  footer { border-top: 1px solid var(--line); padding-top: 18px; font-size: 14px; color: var(--muted); display: grid; gap: 4px; }
+  footer p { max-width: none; }
+
+  @media (max-width: 520px) {
+    body { font-size: 15px; }
+    td:first-child { white-space: normal; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+  html { scroll-behavior: smooth; }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header>
+    <div class="kicker">HELPER 3.0.2 · WINDOWS 11 x64</div>
+    <h1>Helper 3.0 使用與維護</h1>
+    <p class="lede">Helper 在測試機上批次安裝測試軟體、套用系統設定。這一頁給兩種人看：在測試機上執行工具的人，以及新增軟體與系統設定任務的人。</p>
+    <nav class="toc" aria-label="本頁內容">
+      <a href="#use">使用</a>
+      <a href="#maintain">維護</a>
+      <a href="#dev">開發者</a>
+    </nav>
+  </header>
+
+  <div class="notice" role="note">
+    <strong>還沒驗收的部分</strong>
+    <p>真實的系統設定任務（包括由 2.0 的 INI 轉換來的 .cmd）、在沒有安裝 Python 的電腦上執行。系統設定任務會停用 UAC、防火牆、Defender，請先在可以重灌的電腦上試。兩個會修改安全設定的軟體（關閉核心隔離；關閉 HVCI 與易受攻擊驅動程式封鎖清單）沒有以工具實際安裝過。其他項目已在繁體中文與英文版 Windows 11 上驗收。</p>
+  </div>
+
+  <section class="part" id="use">
+    <div class="part-head"><h2>使用</h2><span class="who">在測試機上執行工具的人</span></div>
+
+    <article>
+      <h3>部署（只做一次）</h3>
+      <p>從 <a href="https://github.com/imalextaiwan/helper-public/releases/latest">GitHub Release</a> 下載最新版的 <code>helper.exe</code>，和資源資料夾放在同一層。目標電腦不需要安裝 Python。</p>
+      <div class="block">
+        <pre class="tree"><code>D:\Helper\
+├─ helper.exe
+└─ helper_software\               <span class="dim">資源資料夾（也可以叫 Helper，再保留一個版本）</span>
+   ├─ software.xml                <span class="dim">軟體清單</span>
+   ├─ system_tasks.xml            <span class="dim">系統設定任務清單（選用）</span>
+   ├─ software.xsd、system_tasks.xsd   <span class="dim">給編輯器檢查格式用（選用）</span>
+   ├─ helper_icon.ico             <span class="dim">視窗圖示（選用；3.0.1 以前的 hpler_icon.ico 也可以）</span>
+   ├─ tasks\&lt;任務 id&gt;.cmd
+   └─ &lt;各軟體子資料夾&gt;\</code></pre>
+      </div>
+      <ul>
+        <li><strong>權限</strong>：工具以系統管理員身分執行資料夾裡的安裝檔與 .cmd，所以 <code>D:\Helper</code> 只能讓系統管理員寫入。以系統管理員身分開啟命令提示字元執行下面的指令，只對這個專用資料夾執行。</li>
+      </ul>
+      <div class="block">
+        <pre><code data-copy>icacls "D:\Helper" /inheritance:r /grant:r *S-1-5-32-544:(OI)(CI)F *S-1-5-18:(OI)(CI)F *S-1-5-32-545:(OI)(CI)RX</code></pre>
+      </div>
+      <ul>
+        <li><strong>空間</strong>：執行時先把勾選的軟體複製到「下載」資料夾。真實資料全選約複製 18.2 GB，「下載」所在的磁碟至少要有約 20 GB 可用空間。</li>
+        <li><strong>網路磁碟</strong>：用 <code>\\server\share\Helper\helper.exe</code> 這種路徑，或先複製到本機。<code>Z:</code> 這類磁碟機代號在提權後可能看不到。</li>
+        <li><strong>從 3.0.0、3.0.1 升級</strong>：只要換掉 <code>helper.exe</code>，設定檔都相同。舊版留下的 <code>Hpler_*</code> 暫存資料夾會在下一輪自動刪除；舊的日誌（<code>Hpler_….log</code>）留在原處；資源資料夾裡的 <code>hpler_icon.ico</code> 照樣可以用。</li>
+      </ul>
+    </article>
+
+    <article>
+      <h3>執行</h3>
+      <ol class="steps">
+        <li><div><p>雙擊 <code>helper.exe</code>，UAC 按「是」。按「否」工具不會開啟。</p></div></li>
+        <li><div><p>如果跳出「設定檔的問題」，表示有項目設定錯了。那些項目不會出現在清單上，其他照常使用。按「複製」可以把內容貼給維護的人。</p></div></li>
+        <li><div><p>選「軟體安裝」或「系統設定」分頁，勾選要執行的項目（預設全部勾選）。<span class="btn green">全選</span> <span class="btn red">全不選</span> 只作用於目前的分頁。</p></div></li>
+        <li><div><p>按 <span class="btn blue">開始執行</span>。工具先把勾選的軟體複製到「下載」裡的 <code>Helper_&lt;日期時間&gt;</code>，全部複製完才依序執行，全部結束後刪除這個資料夾。</p></div></li>
+        <li><div><p>執行中可以按 <span class="btn orange">暫停</span>（再按一次是「繼續」）或 <span class="btn grey">取消</span>，都在目前的項目完成後才生效。執行中關閉視窗，會先問你確定要關閉嗎。</p></div></li>
+        <li><div><p>完成對話框列出成功與失敗的數量；按「取消」時沒有執行的項目另外列出，不算失敗。</p></div></li>
+        <li><div><p><span class="btn slate">日誌資料夾</span> 會開啟桌面的 <code>QT_TOOL_LOGS</code>。每執行一輪一個檔案（<code>Helper_軟體安裝_&lt;日期時間&gt;.log</code>），裡面有每個項目的完整命令列與輸出。回報問題時請附上。</p></div></li>
+      </ol>
+    </article>
+
+    <article>
+      <h3>項目旁的狀態</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>狀態</th><th>意思</th></tr></thead>
+          <tbody>
+            <tr><td class="state">等待中</td><td>還沒輪到</td></tr>
+            <tr><td class="state">複製中、已複製</td><td>正在複製到暫存資料夾、已經複製好</td></tr>
+            <tr><td class="state">執行中</td><td>正在執行</td></tr>
+            <tr><td class="state">成功</td><td>結束碼是 0，或是設定為成功的結束碼</td></tr>
+            <tr><td class="state">成功（3010）</td><td>成功，但安裝程式要求重新開機</td></tr>
+            <tr><td class="state">失敗（5）</td><td>以括號裡的結束碼結束；原因在日誌</td></tr>
+            <tr><td class="state">逾時</td><td>超過時間，這個項目與它啟動的程式都已被結束</td></tr>
+            <tr><td class="state">無法啟動</td><td>找不到或無法執行安裝檔；原因在日誌</td></tr>
+            <tr><td class="state">複製失敗</td><td>複製到暫存資料夾時出錯（例如網路中斷、檔案被鎖定），這個項目沒有執行</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article>
+      <h3>常見狀況</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>看到的狀況</th><th>原因與處理</th></tr></thead>
+          <tbody>
+            <tr><td>「Helper 無法啟動」，列出預期的目錄結構</td><td>找不到 <code>software.xml</code>，或檔案不是合法的 XML、不是 UTF-8。依訊息修正</td></tr>
+            <tr><td>「空間不足」</td><td>「下載」所在的磁碟不夠。清出空間，或少勾幾個大型軟體</td></tr>
+            <tr><td>完成對話框列出「刪不掉的檔案」</td><td>有程式還在使用暫存檔。下一輪執行時會再刪除，也可以重新開機後再執行一次</td></tr>
+            <tr><td>系統設定分頁顯示「系統設定無法使用」</td><td>找不到 <code>system_tasks.xml</code>，或檔案有錯誤。原因顯示在分頁上，也在問題清單裡</td></tr>
+            <tr><td>「無法建立日誌檔」</td><td>桌面的 <code>QT_TOOL_LOGS</code> 無法建立（例如有同名的檔案）。沒有執行任何項目，處理後再按「開始執行」</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <section class="part" id="maintain">
+    <div class="part-head"><h2>維護</h2><span class="who">新增、修改軟體與系統設定任務的人</span></div>
+
+    <article>
+      <h3>開始之前</h3>
+      <ul>
+        <li>所有設定都在 <code>helper_software\</code> 裡；資料夾只有系統管理員能寫入，要以系統管理員身分編輯。</li>
+        <li>建議用 VS Code 加上 Red Hat 的「XML」擴充功能：XML 開頭指向同一個資料夾裡的 XSD，打錯欄位或漏掉必填欄位會即時標示。</li>
+        <li>XML 以 UTF-8 存檔；名稱裡的 <code>&amp;</code> 寫成 <code>&amp;amp;</code>，<code>&lt;</code> 寫成 <code>&amp;lt;</code>。</li>
+        <li><code>id</code> 只能用小寫英文、數字、底線，同一個檔案裡不可重複。XML 裡的順序就是畫面上與執行的順序。</li>
+      </ul>
+    </article>
+
+    <article>
+      <h3>新增軟體</h3>
+      <ol class="steps">
+        <li><div><p>在 <code>helper_software\</code> 建立子資料夾，放入安裝檔。要顯示圖示的話，放一個 <code>icon.png</code>（或 .ico、.jpg、.gif）。</p></div></li>
+        <li><div>
+          <p>在 <code>software.xml</code> 想要顯示的位置加一筆：</p>
+          <div class="block"><pre><code data-copy>&lt;item id="cpu_z"&gt;
+  &lt;name&gt;CPU-Z&lt;/name&gt;
+  &lt;folder&gt;CPU-Z&lt;/folder&gt;
+  &lt;executable&gt;cpu-z_2.20.2-en.exe&lt;/executable&gt;
+  &lt;args&gt;/silent&lt;/args&gt;
+&lt;/item&gt;</code></pre></div>
+        </div></li>
+        <li><div><p>重新開啟工具，確認沒有跳出問題清單、新的軟體出現在清單上，再到測試機上實際安裝一次。</p></div></li>
+      </ol>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>欄位</th><th>說明</th></tr></thead>
+          <tbody>
+            <tr><td><code>&lt;name&gt;</code></td><td>畫面上顯示的名稱，可以用中文</td></tr>
+            <tr><td><code>&lt;folder&gt;</code></td><td>子資料夾名稱；不能是絕對路徑，也不能含 <code>..</code></td></tr>
+            <tr><td><code>&lt;executable&gt;</code></td><td>子資料夾裡的安裝檔名稱，只寫檔名</td></tr>
+            <tr><td><code>&lt;args&gt;</code></td><td>選用。參數原樣傳給安裝檔，例如 <code>/D=C:\Program Files\App</code> 不會被拆開</td></tr>
+            <tr><td><code>successCodes</code></td><td>選用，寫在 <code>&lt;item&gt;</code> 上。安裝程式以 3010 表示「成功，要重新開機」時，寫 <code>successCodes="0,3010"</code></td></tr>
+            <tr><td><code>copyFirst</code></td><td>選用，預設 <code>true</code>。見下一段</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article>
+      <h3>什麼時候設定 copyFirst="false"</h3>
+      <p>預設會先把整個子資料夾複製到「下載」裡的暫存資料夾，從複本執行，結束後刪除。下面兩種情況改成 <code>copyFirst="false"</code>，直接從資源資料夾執行：</p>
+      <div class="cols">
+        <div class="card"><h4>本身就會把檔案複製到桌面</h4><p>例如 SampleDeskTool（28.6 GB）、SampleDeskFiles。不用複製兩次。</p></div>
+        <div class="card"><h4>執行後還要用自己資料夾裡的檔案</h4><p>例如建立的捷徑指向自己的資料夾。暫存資料夾刪除後，捷徑會失效。</p></div>
+      </div>
+      <p class="muted">不確定時保留預設值，在測試機上執行一次，確認暫存資料夾刪除後仍然正常。</p>
+    </article>
+
+    <article>
+      <h3>新增系統設定任務</h3>
+      <ol class="steps">
+        <li><div><p>從原始碼的 <code>resources\templates\</code> 擇一複製，改名為 <code>tasks\&lt;任務 id&gt;.cmd</code>：<code>run_all.cmd</code>（每一步都執行，有一步失敗就算失敗）或 <code>stop_on_error.cmd</code>（任何一步失敗就停）。</p></div></li>
+        <li><div>
+          <p>寫好指令，例如：</p>
+          <div class="block"><pre><code data-copy>@echo off
+rem Helper system task: run every step, fail if any step failed
+setlocal
+set "FAILED=0"
+
+powercfg /change monitor-timeout-ac 0 || set "FAILED=1"
+powercfg /change standby-timeout-ac 0 || set "FAILED=1"
+
+exit /b %FAILED%</code></pre></div>
+        </div></li>
+        <li><div>
+          <p>在 <code>system_tasks.xml</code> 對應的分類裡加上：</p>
+          <div class="block"><pre><code data-copy>&lt;task id="power_008"&gt;
+  &lt;name&gt;螢幕與待機永不關閉&lt;/name&gt;
+  &lt;description&gt;插電時不關閉螢幕、不進入待機&lt;/description&gt;
+&lt;/task&gt;</code></pre></div>
+        </div></li>
+        <li><div><p><strong>在測試機上以系統管理員身分雙擊 .cmd 測一次</strong>，確認結果正確、結束時沒有停下來等輸入。再重新開啟工具，確認任務出現在清單上。</p></div></li>
+      </ol>
+      <ul>
+        <li>成功時 <code>exit /b 0</code>，失敗時以非 0 結束，不然失敗會被當成成功。</li>
+        <li>存成 ANSI（Big5），或內容只用英文；換行用 CRLF（記事本預設）。</li>
+        <li>不要用 <code>pause</code> 或任何要等輸入的指令；不要用 <code>wmic</code>（Windows 11 24H2 起預設停用）。</li>
+        <li>要印出 <code>%</code> 時寫 <code>%%</code>，<code>for</code> 迴圈的變數寫 <code>%%i</code>；設定變數寫成 <code>set "X=1"</code>。</li>
+        <li>新增分類：在 <code>system_tasks.xml</code> 加上 <code>&lt;category id="…" name="畫面上的名稱"&gt;</code>，裡面放 <code>&lt;task&gt;</code>。</li>
+      </ul>
+    </article>
+
+    <article>
+      <h3>改完之後：看問題清單</h3>
+      <p>工具啟動時會檢查兩個 XML。有問題的項目不顯示在清單上，並跳出問題清單。常見的訊息：</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>訊息</th><th>處理</th></tr></thead>
+          <tbody>
+            <tr><td>找不到執行檔</td><td><code>&lt;folder&gt;</code> 或 <code>&lt;executable&gt;</code> 打錯，或檔案還沒放進子資料夾</td></tr>
+            <tr><td>找不到腳本 tasks\…cmd</td><td>.cmd 的檔名和 <code>id</code> 不同，或還沒放進 <code>tasks\</code></td></tr>
+            <tr><td>tasks\….cmd 沒有登記</td><td><code>tasks\</code> 裡有 .cmd，但 XML 沒有對應的 <code>&lt;task&gt;</code></td></tr>
+            <tr><td>有不認得的元素／屬性</td><td>欄位名稱打錯，例如把 <code>&lt;args&gt;</code> 寫成 <code>&lt;arg&gt;</code>：這個欄位會被忽略</td></tr>
+            <tr><td>id 重複</td><td>只保留第一筆</td></tr>
+            <tr><td>不是合法的 XML：第 N 行第 M 欄</td><td>標籤沒有關閉、<code>&amp;</code> 沒有寫成 <code>&amp;amp;</code> 等，依行號修正</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article>
+      <h3>從 2.0 的 INI 轉換</h3>
+      <p>3.0 不讀 2.0 的 <code>config.ini</code>、<code>system_optimizations.ini</code>。在有原始碼與 Python 3.12 的電腦上執行：</p>
+      <div class="block"><pre><code data-copy>python tools\ini2xml.py &lt;2.0 的資源資料夾&gt; &lt;輸出資料夾&gt; --no-copy-first software17,software18</code></pre></div>
+      <ul>
+        <li>輸出資料夾必須是新的或空的；<code>--no-copy-first</code> 列出要設為 <code>copyFirst="false"</code> 的軟體 id。</li>
+        <li>逐項看過轉換報告 <code>ini2xml_report.txt</code>，再把輸出的 XML、XSD、<code>tasks\</code> 放進資源資料夾。</li>
+        <li>轉換出來的每個 .cmd 都要在測試機上以系統管理員身分執行一次。</li>
+        <li>要退回 2.0.x 時，換回 2.0.x 的執行檔即可：INI 和 XML 可以放在同一個資源資料夾。</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="part" id="dev">
+    <div class="part-head"><h2>開發者</h2><span class="who">修改程式、打包、發版的人</span></div>
+
+    <article>
+      <h3>常用指令</h3>
+      <div class="block"><pre><code data-copy>pip install -r requirements-dev.txt
+python -m pytest
+pyinstaller --clean --noconfirm helper.spec</code></pre></div>
+      <ul>
+        <li>需要 Python 3.12 x64（含 tkinter）。打包的輸出是 <code>dist\helper.exe</code>；Windows 的檔名不分大小寫，會蓋掉 <code>dist\</code> 裡同名的 <code>Helper.exe</code>。</li>
+        <li>產品名稱與版本號只寫在 <code>hpler/__init__.py</code>。套件名稱沿用 <code>hpler</code>：使用者看不到，改成 <code>helper</code> 會和 <code>helper.py</code> 同名（設計第 2.4 節）。</li>
+        <li>3.x 的修改開 PR 到預設分支；2.0.x 的修正在 <code>release/2.0</code> 分支。</li>
+        <li>發版：驗收清單通過 → 更新 <code>CHANGELOG.md</code> → 合併 → 建立標籤 → GitHub Release 附上驗收過的執行檔。詳見 repo 的 <code>docs/ROADMAP.md</code> 第 7 節。</li>
+      </ul>
+    </article>
+
+    <article>
+      <h3>還沒完成的事</h3>
+      <ul>
+        <li>在可以重灌的繁中 Windows 11 測試機上補做驗收清單 C 第 19、31 項，以及每個轉換後的 .cmd 實際執行一次（驗收資料夾與說明已準備好）。</li>
+        <li>建立 <code>main</code> 分支與保護規則；設定 GitHub Actions（之後由 CI 跑測試與打包）。</li>
+      </ul>
+    </article>
+  </section>
+
+  <footer>
+    <p>完整說明：repo 的 <a href="https://github.com/imalextaiwan/helper-public/blob/HEAD/docs/DEPLOYMENT.md">docs/DEPLOYMENT.md</a>（部署）、<a href="https://github.com/imalextaiwan/helper-public/blob/HEAD/docs/MAINTENANCE.md">docs/MAINTENANCE.md</a>（維護）、<a href="https://github.com/imalextaiwan/helper-public/blob/HEAD/CHANGELOG.md">CHANGELOG.md</a>。</p>
+    <p>依據 Helper 3.0.2 與設計文件 v1.10，2026-10-27 整理。3.0.1 以前的名稱誤寫為「Hpler」。</p>
+  </footer>
+</div>
+
+<script>
+  document.querySelectorAll('code[data-copy]').forEach(function (code) {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'copy';
+    button.textContent = '複製';
+    button.addEventListener('click', function () {
+      var text = code.textContent;
+      function selectText() {
+        var range = document.createRange();
+        range.selectNodeContents(code);
+        var selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        button.textContent = '已選取，按 Ctrl+C';
+      }
+      try {
+        navigator.clipboard.writeText(text).then(function () {
+          button.textContent = '已複製';
+          setTimeout(function () { button.textContent = '複製'; }, 1600);
+        }, selectText);
+      } catch (e) {
+        selectText();
+      }
+    });
+    code.closest('.block').appendChild(button);
+  });
+</script>
+</body>
+</html>

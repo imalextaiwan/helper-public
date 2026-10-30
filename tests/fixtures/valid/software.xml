@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 範例資源資料夾的軟體清單（設計第 4.2 節）。測試用：安裝檔都是空的檔案 -->
+<software timeout="1000"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="software.xsd">
+  <item id="cpu_z">
+    <name>CPU-Z</name>
+    <folder>cpu-z</folder>
+    <executable>setup.exe</executable>
+    <args>/S</args>
+  </item>
+  <item id="vcredist" successCodes="0,3010">
+    <name>Visual C++ 可轉散發套件</name>
+    <folder>VCRedist</folder>
+    <executable>vc_redist.x64.exe</executable>
+    <args>/install /quiet /norestart</args>
+  </item>
+  <item id="sample_desk_tool" copyFirst="false">
+    <name>SampleDeskTool（資料會放在桌面）</name>
+    <folder>SampleDeskTool</folder>
+    <executable>SampleDeskTool.exe</executable>
+  </item>
+</software>
